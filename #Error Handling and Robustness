@@ -1,0 +1,110 @@
+#Error Handling and Robustness
+from fpdf import FPDF
+import sys
+
+class ResumePDF(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 16)
+        self.cell(0, 10, 'Resume', ln=True, align='C')
+        self.ln(10)
+
+    def add_section(self, title):
+        self.set_font('Arial', 'B', 14)
+        self.cell(0, 10, title, ln=True)
+        self.ln(4)
+
+    def add_personal_info(self, info):
+        self.set_font('Arial', '', 12)
+        self.cell(0, 10, f"Name: {info.get('name', '')}", ln=True)
+        self.cell(0, 10, f"Email: {info.get('email', '')}", ln=True)
+        self.cell(0, 10, f"Phone: {info.get('phone', '')}", ln=True)
+        self.ln(10)
+
+    def add_experience(self, experiences):
+        self.set_font('Arial', '', 12)
+        for exp in experiences:
+            self.set_font('Arial', 'B', 12)
+            self.cell(0, 10, f"Company: {exp.get('company', '')}", ln=True)
+            self.set_font('Arial', '', 12)
+            self.cell(0, 10, f"Position: {exp.get('position', '')}", ln=True)
+            self.cell(0, 10, f"Duration: {exp.get('duration', '')}", ln=True)
+            self.ln(4)
+
+def get_input(prompt, validation_func=None, error_message="Invalid input. Please try again."):
+    while True:
+        try:
+            user_input = input(prompt)
+            if validation_func:
+                if validation_func(user_input):
+                    return user_input
+                else:
+                    print(error_message)
+            else:
+                return user_input
+        except (KeyboardInterrupt, EOFError):
+            print("\nInput interrupted. Exiting the application.")
+            sys.exit()
+
+def validate_non_empty(input_str):
+    return bool(input_str.strip())
+
+def validate_email(email):
+    import re
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(pattern, email) is not None
+
+def main():
+    try:
+        print("Welcome to the Smart Resume Builder!")
+
+        # Collect personal info
+        name = get_input("Enter your full name: ", validate_non_empty)
+        email = get_input("Enter your email: ", validate_email)
+        phone = get_input("Enter your phone number: ", validate_non_empty)
+
+        personal_info = {
+            'name': name,
+            'email': email,
+            'phone': phone
+        }
+
+        # Collect experience
+        experiences = []
+        while True:
+            company = get_input("Enter company name (or type 'done' to finish): ", lambda x: True)
+            if company.lower() == 'done':
+                break
+            position = get_input("Enter your position: ", validate_non_empty)
+            duration = get_input("Enter duration (e.g., Jan 2020 - Dec 2021): ", validate_non_empty)
+            experiences.append({
+                'company': company,
+                'position': position,
+                'duration': duration
+            })
+
+        # Generate PDF
+        pdf = ResumePDF()
+        pdf.add_page()
+
+        # Add personal info
+        pdf.add_section("Personal Information")
+        pdf.add_personal_info(personal_info)
+
+        # Add experience
+        if experiences:
+            pdf.add_section("Experience")
+            pdf.add_experience(experiences)
+
+        # Save PDF
+        filename = 'resume.pdf'
+        try:
+            pdf.output(filename)
+            print(f"Resume successfully saved as {filename}")
+        except IOError as e:
+            print(f"Failed to save PDF: {e}")
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+if __name__ == "__main__":
+    main()
