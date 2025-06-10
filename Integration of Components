@@ -1,0 +1,18 @@
++----------------+        +-------------------+        +---------------------+
+|  User Input    |  --->  |   UI Layer        |  --->  |   Data Models       |
+| (CLI Prompts)  |        | (Input collection |        | (Resume, Experience,|
+|                |        |  & validation)   |        |  Education, Skills) |
++----------------+        +-------------------+        +---------------------+
+                                  |
+                                  | (Validated data)
+                                  v
+                        +--------------------------+
+                        |  Resume Data Model       |
+                        +--------------------------+
+                                  |
+                                  | (Complete Resume Data)
+                                  v
+                        +--------------------------+
+                        |  PDF Generator           |
+                        |  (Formats and creates PDF)|
+                        +--------------------------+
