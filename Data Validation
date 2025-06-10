@@ -1,0 +1,49 @@
+#Non-Empty Validation
+
+def validate_non_empty(input_str):
+    if input_str.strip():
+        return True
+    else:
+        print("This field cannot be empty. Please enter a value.")
+        return False
+
+        #Email Validation
+
+        import re
+
+def validate_email(email):
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    if re.match(pattern, email):
+        return True
+    else:
+        print("Invalid email format. Please enter a valid email address.")
+        return False
+
+        #Phone Number Validation
+
+        def validate_phone(phone):
+    pattern = r'^\+?\d{10,15}$'
+    if re.match(pattern, phone):
+        return True
+    else:
+        print("Invalid phone number. Please enter a valid number with country code if applicable.")
+        return False
+
+        #Date or Duration Validation
+        def validate_duration(duration):
+    # Basic validation, can be expanded
+    pattern = r'^[A-Za-z]+\s\d{4}\s-\s[A-Za-z]+\s\d{4}|Present$'
+    if re.match(pattern, duration):
+        return True
+    else:
+        print("Invalid duration format. Please follow the pattern 'Jan 2020 - Dec 2021' or 'Jan 2020 - Present'.")
+        return False
+
+        #Implementation in Input Handling
+        def prompt_and_validate(prompt_msg, validation_func):
+    while True:
+        user_input = input(prompt_msg + " ")
+        if validation_func(user_input):
+            return user_input
+
+        
