@@ -1,0 +1,158 @@
+# models.py
+from dataclasses import dataclass, field
+from typing import List
+
+@dataclass
+class Experience:
+    company: str
+    position: str
+    duration: str
+
+@dataclass
+class Education:
+    institution: str
+    degree: str
+    year: str
+
+@dataclass
+class Resume:
+    name: str = ""
+    email: str = ""
+    phone: str = ""
+    experiences: List[Experience] = field(default_factory=list)
+    educations: List[Education] = field(default_factory=list)
+    skills: List[str] = field(default_factory=list)
+
+# validators.py
+import re
+
+def validate_non_empty(input_str: str) -> bool:
+    return bool(input_str.strip())
+
+def validate_email(email: str) -> bool:
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(pattern, email) is not None
+
+def validate_phone(phone: str) -> bool:
+    return phone.isdigit() and 7 <= len(phone) <= 15
+
+def validate_year(year: str) -> bool:
+    return year.isdigit() and 1900 <= int(year) <= 2100
+
+# pdf_generator.py
+from fpdf import FPDF
+from models import Resume
+
+def generate_pdf(resume: Resume, filename='resume.pdf'):
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    # Title
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(0, 10, resume.name, ln=True, align='C')
+    pdf.set_font('Arial', '', 12)
+    pdf.cell(0, 10, f"Email: {resume.email} | Phone: {resume.phone}", ln=True, align='C')
+    pdf.ln(10)
+
+    # Experience
+    if resume.experiences:
+        pdf.set_font('Arial', 'B', 14)
+        pdf.cell(0, 10, 'Experience', ln=True)
+        pdf.set_font('Arial', '', 12)
+        for exp in resume.experiences:
+            pdf.cell(0, 8, f"{exp.position} at {exp.company} ({exp.duration})", ln=True)
+        pdf.ln(8)
+
+    # Education
+    if resume.educations:
+        pdf.set_font('Arial', 'B', 14)
+        pdf.cell(0, 10, 'Education', ln=True)
+        pdf.set_font('Arial', '', 12)
+        for edu in resume.educations:
+            pdf.cell(0, 8, f"{edu.degree} at {edu.institution} ({edu.year})", ln=True)
+        pdf.ln(8)
+
+    # Skills
+    if resume.skills:
+        pdf.set_font('Arial', 'B', 14)
+        pdf.cell(0, 10, 'Skills', ln=True)
+        pdf.set_font('Arial', '', 12)
+        skills_str = ', '.join(resume.skills)
+        pdf.multi_cell(0, 8, skills_str)
+    
+    try:
+        pdf.output(filename)
+        print(f"Successfully generated {filename}")
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+
+
+# ui.py
+from models import Resume, Experience, Education
+from validators import *
+from pdf_generator import generate_pdf
+
+def get_input(prompt, validation_func=None, error_msg="Invalid input. Please try again."):
+    while True:
+        try:
+            value = input(prompt)
+            if validation_func:
+                if validation_func(value):
+                    return value
+                else:
+                    print(error_msg)
+            else:
+                return value
+        except (KeyboardInterrupt, EOFError):
+            print("\nOperation cancelled by user.")
+            exit()
+
+def main():
+    resume = Resume()
+
+    print("Welcome to the Smart Resume Builder!\n")
+
+    # Personal Info
+    resume.name = get_input("Enter your full name: ", validate_non_empty)
+    resume.email = get_input("Enter your email: ", validate_email, "Please enter a valid email.")
+    resume.phone = get_input("Enter your phone number: ", validate_phone, "Enter a valid phone number (digits only).")
+
+    # Experience
+    while True:
+        add_exp = get_input("Add experience? (y/n): ").lower()
+        if add_exp == 'y':
+            company = get_input("Company: ", validate_non_empty)
+            position = get_input("Position: ", validate_non_empty)
+            duration = get_input("Duration (e.g., Jan 2020 - Dec 2021): ", validate_non_empty)
+            resume.experiences.append(Experience(company, position, duration))
+        elif add_exp == 'n':
+            break
+        else:
+            print("Please enter 'y' or 'n'.")
+
+    # Education
+    while True:
+        add_edu = get_input("Add education? (y/n): ").lower()
+        if add_edu == 'y':
+            institution = get_input("Institution: ", validate_non_empty)
+            degree = get_input("Degree: ", validate_non_empty)
+            year = get_input("Year (e.g., 2020): ", validate_year, "Enter a valid year.")
+            resume.educations.append(Education(institution, degree, year))
+        elif add_edu == 'n':
+            break
+        else:
+            print("Please enter 'y' or 'n'.")
+
+    # Skills
+    skills_input = get_input("Enter skills separated by commas: ", validate_non_empty)
+    resume.skills = [skill.strip() for skill in skills_input.split(',')]
+
+    # Generate PDF
+    try:
+        generate_pdf(resume)
+    except Exception as e:
+        print(f"Failed to generate resume: {e}")
+
+if __name__ == "__main__":
+    main()
